@@ -93,6 +93,9 @@ tbody tr:hover{background:#fdfcff}
 .item-title{display:block;padding:0;border:0;background:none;color:#383343;text-align:left;font-size:12px;font-weight:700}
 .item-title:hover{color:#6853c9}
 .item-project{display:block;margin-top:5px;color:#aaa5b0;font-size:10px}
+.memo-shortcut{display:inline-flex;align-items:center;gap:5px;min-height:44px;margin-top:3px;padding:0 9px;border:1px solid #e7e2f7;border-radius:9px;background:#f8f6ff;color:#664fc1;font-size:11px;font-weight:700}
+.memo-shortcut:hover{background:#efebfb}
+.memo-shortcut span{color:#8776c6}
 .area-tag,.status-tag{display:inline-flex;align-items:center;gap:5px;border-radius:6px;padding:5px 8px;font-size:10px;font-weight:700}
 .area-tag svg{font-size:12px}
 .area-tag.company{color:#7057b8;background:#f2eefe}
@@ -149,6 +152,22 @@ tbody tr:hover{background:#fdfcff}
 .detail-block h3{display:flex;align-items:center;gap:8px;color:#3d3649;font-size:13px;margin:0 0 12px}
 .detail-block h3 svg{color:#735dcc;font-size:17px}
 .detail-block small{color:#aaa4b0;font-size:10px}
+.memo-form .field{margin-bottom:12px}
+.memo-form textarea{min-height:105px}
+.memo-hint{margin:0 0 12px;color:#827c8b;font-size:11px;line-height:1.5}
+.memo-error{margin:0 0 10px;color:#b3334b;font-size:11px}
+.memo-submit{width:100%;min-height:44px}
+.memo-list-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:24px 0 10px}
+.memo-list-heading h3{margin:0}
+.memo-list-heading>span{color:#8b8494;font-size:11px}
+.memo-search{display:block;margin-bottom:12px}
+.memo-search input{width:100%;min-height:44px;border:1px solid #e6e2e9;border-radius:9px;background:#fff;color:#3c3544;padding:10px 12px;font-size:12px}
+.memo-list{display:grid;gap:10px;margin-bottom:10px}
+.memo-entry{min-width:0;padding:13px;border:1px solid #e9e4f1;border-radius:10px;background:#fcfbff;overflow-wrap:anywhere}
+.memo-entry time{color:#827a90;font-size:10px;font-variant-numeric:tabular-nums}
+.memo-entry h4{margin:7px 0 5px;color:#443b50;font-size:12px}
+.memo-entry p{margin:7px 0 0;color:#5e5568;font-size:12px;line-height:1.65;white-space:pre-wrap}
+.no-memo{padding:18px 12px;border:1px dashed #ddd6e9;border-radius:10px;color:#8d8498;font-size:11px;text-align:center}
 .log-form{display:flex;gap:7px}
 .log-form input{flex:1}
 .log-form button{flex:none;width:38px;border:0;border-radius:9px;background:#6853c9;color:#fff;font-size:17px}
@@ -290,6 +309,9 @@ html.dark tbody tr:hover{background:#292535}
 html.dark .item-title{color:#f1eef8}
 html.dark .item-title:hover{color:#c4b4ff}
 html.dark .item-project,html.dark .table-footer,html.dark .static-note{color:#aaa3b5}
+html.dark .memo-shortcut{background:#322b45;border-color:#574a75;color:#d4c4ff}
+html.dark .memo-shortcut:hover{background:#41345b}
+html.dark .memo-shortcut span{color:#b9a8df}
 html.dark .area-tag.company{background:#3c3059;color:#d0baff}
 html.dark .area-tag.school{background:#263f50;color:#a8d9f5}
 html.dark .status-tag.in-progress{background:#263c54;color:#a8d1ff}
@@ -306,7 +328,15 @@ html.dark .icon-button{background:#322c3e;color:#d5ccdf}
 html.dark .icon-button:hover{background:#443951}
 html.dark .field span,html.dark .detail-meta strong,html.dark .detail-block h3{color:#ede8f4}
 html.dark .field input,html.dark .field select,html.dark .field textarea,html.dark .detail-block textarea,html.dark .log-form input{background:#272330;border-color:#51475d;color:#f1eef8}
+html.dark .memo-search input{background:#272330;border-color:#51475d;color:#f1eef8}
+html.dark .memo-hint,html.dark .memo-list-heading>span,html.dark .memo-entry time,html.dark .no-memo{color:#b6aec1}
+html.dark .memo-error{color:#ff9aad}
+html.dark .memo-entry{background:#292534;border-color:#4b405e}
+html.dark .memo-entry h4{color:#f1eef8}
+html.dark .memo-entry p{color:#d9d0e3}
+html.dark .no-memo{border-color:#51475d}
 html.dark .field input::placeholder,html.dark .field textarea::placeholder,html.dark .detail-block textarea::placeholder,html.dark .log-form input::placeholder{color:#aaa1b6}
 html.dark .log-list{border-left-color:#645280}
 html.dark .log-list p{color:#d5ccdf}
 @media(max-width:599px){html.dark .sidebar{border-top-color:#393545}}
+@media(max-width:599px){.memo-form .field input,.memo-form .field textarea,.memo-search input{font-size:16px}}

@@ -3,19 +3,26 @@ type Area = '公司' | '學校'
 type Status = '進行中' | '待開始' | '已完成'
 type Priority = '高' | '中' | '低'
 type Filter = '全部項目' | Area
-interface WorkItem { id: number, title: string, area: Area, project: string, status: Status, priority: Priority, dueDate: string, description: string, memo: string, logs: string[] }
+interface MemoEntry { id: number, title: string, content: string, createdAt: string }
+interface WorkItem { id: number, title: string, area: Area, project: string, status: Status, priority: Priority, dueDate: string, description: string, memos: MemoEntry[], logs: string[] }
 const items = ref<WorkItem[]>([
-  { id: 1, title: '整理第三季產品需求', area: '公司', project: '產品規劃', status: '進行中', priority: '高', dueDate: '2026-10-03', description: '彙整各部門回饋，準備下一次需求討論。', memo: '先確認設計與工程的優先順序。', logs: ['09/30 已收集業務團隊的需求清單。'] },
-  { id: 2, title: '完成行動平台期中報告', area: '學校', project: '行動平台設計', status: '進行中', priority: '高', dueDate: '2026-10-06', description: '整理研究背景、系統架構與目前成果。', memo: '報告需附上操作流程畫面。', logs: ['09/29 完成報告大綱。'] },
-  { id: 3, title: '更新客戶訪談摘要', area: '公司', project: '使用者研究', status: '待開始', priority: '中', dueDate: '2026-10-09', description: '將近期訪談重點整理成可搜尋的摘要。', memo: '', logs: [] },
-  { id: 4, title: '閱讀資料庫系統論文', area: '學校', project: '資料庫系統', status: '進行中', priority: '中', dueDate: '2026-10-12', description: '閱讀指定論文並整理三個討論問題。', memo: '留意實驗方法與限制。', logs: ['09/28 已下載指定閱讀材料。'] },
-  { id: 5, title: '整理每週例會待辦', area: '公司', project: '團隊協作', status: '已完成', priority: '低', dueDate: '2026-09-30', description: '確認本週會議待辦與負責人。', memo: '', logs: ['09/30 完成會議紀錄與分工。'] }
+  { id: 1, title: '整理第三季產品需求', area: '公司', project: '產品規劃', status: '進行中', priority: '高', dueDate: '2026-10-03', description: '彙整各部門回饋，準備下一次需求討論。', memos: [{ id: 1, title: '討論前確認', content: '先確認設計與工程的優先順序。', createdAt: '2026-09-30T09:00:00+08:00' }], logs: ['09/30 已收集業務團隊的需求清單。'] },
+  { id: 2, title: '完成行動平台期中報告', area: '學校', project: '行動平台設計', status: '進行中', priority: '高', dueDate: '2026-10-06', description: '整理研究背景、系統架構與目前成果。', memos: [{ id: 2, title: '報告準備', content: '報告需附上操作流程畫面。', createdAt: '2026-09-29T14:00:00+08:00' }], logs: ['09/29 完成報告大綱。'] },
+  { id: 3, title: '更新客戶訪談摘要', area: '公司', project: '使用者研究', status: '待開始', priority: '中', dueDate: '2026-10-09', description: '將近期訪談重點整理成可搜尋的摘要。', memos: [], logs: [] },
+  { id: 4, title: '閱讀資料庫系統論文', area: '學校', project: '資料庫系統', status: '進行中', priority: '中', dueDate: '2026-10-12', description: '閱讀指定論文並整理三個討論問題。', memos: [{ id: 3, title: '閱讀重點', content: '留意實驗方法與限制。', createdAt: '2026-09-28T18:00:00+08:00' }], logs: ['09/28 已下載指定閱讀材料。'] },
+  { id: 5, title: '整理每週例會待辦', area: '公司', project: '團隊協作', status: '已完成', priority: '低', dueDate: '2026-09-30', description: '確認本週會議待辦與負責人。', memos: [], logs: ['09/30 完成會議紀錄與分工。'] }
 ])
 const activeFilter = ref<Filter>('全部項目')
 const search = ref('')
 const createOpen = ref(false)
 const selectedItemId = ref<number | null>(null)
 const newLog = ref('')
+const memoTitle = ref('')
+const memoContent = ref('')
+const memoSearch = ref('')
+const memoError = ref('')
+const focusMemoOnOpen = ref(false)
+let nextMemoId = 4
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
 function toggleColorMode() {
@@ -28,9 +35,28 @@ const filteredItems = computed(() => items.value.filter((item) => {
   return (activeFilter.value === '全部項目' || item.area === activeFilter.value) && (!keyword || `${item.title} ${item.project} ${item.description}`.toLocaleLowerCase().includes(keyword))
 }))
 const selectedItem = computed(() => items.value.find(item => item.id === selectedItemId.value))
+const visibleMemos = computed(() => selectedItem.value?.memos
+  .filter(memo => `${memo.title} ${memo.content}`.toLocaleLowerCase().includes(memoSearch.value.trim().toLocaleLowerCase()))
+  .slice()
+  .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt) || b.id - a.id) || [])
 const activeCount = computed(() => items.value.filter(item => item.status === '進行中').length)
-const upcomingCount = computed(() => items.value.filter(item => item.status !== '已完成' && item.dueDate && item.dueDate <= '2026-10-07').length)
+const todayIso = ref('')
+const todayLabel = ref('')
+const weekEndExclusive = computed(() => {
+  if (!todayIso.value) return ''
+  const end = new Date(`${todayIso.value}T00:00:00Z`)
+  end.setUTCDate(end.getUTCDate() + 7)
+  return end.toISOString().slice(0, 10)
+})
+const upcomingCount = computed(() => items.value.filter(item => item.status !== '已完成' && todayIso.value && item.dueDate >= todayIso.value && item.dueDate < weekEndExclusive.value).length)
 const completedCount = computed(() => items.value.filter(item => item.status === '已完成').length)
+function updateToday() {
+  const now = new Date()
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now)
+  const part = (type: string) => parts.find(item => item.type === type)?.value || ''
+  todayIso.value = `${part('year')}-${part('month')}-${part('day')}`
+  todayLabel.value = new Intl.DateTimeFormat('zh-TW', { timeZone: 'Asia/Taipei', year: 'numeric', month: 'long', day: 'numeric' }).format(now)
+}
 function formatDate(value: string) {
   if (!value) return '未設定'
   const [, month, day] = value.split('-')
@@ -38,11 +64,32 @@ function formatDate(value: string) {
 }
 function createItem() {
   if (!form.title.trim()) return
-  items.value.unshift({ id: Date.now(), title: form.title.trim(), area: form.area, project: form.project.trim() || '未分類', status: form.status, priority: form.priority, dueDate: form.dueDate, description: form.description.trim(), memo: '', logs: [] })
+  items.value.unshift({ id: Date.now(), title: form.title.trim(), area: form.area, project: form.project.trim() || '未分類', status: form.status, priority: form.priority, dueDate: form.dueDate, description: form.description.trim(), memos: [], logs: [] })
   activeFilter.value = '全部項目'
   search.value = ''
   Object.assign(form, { title: '', area: '公司', project: '', status: '待開始', priority: '中', dueDate: '', description: '' })
   createOpen.value = false
+}
+function openDetail(id: number, focusMemo = false) {
+  focusMemoOnOpen.value = focusMemo
+  selectedItemId.value = id
+}
+function formatMemoTime(value: string) {
+  return new Intl.DateTimeFormat('zh-TW', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(value))
+}
+function addMemo() {
+  if (!selectedItem.value) return
+  const content = memoContent.value.trim()
+  if (!content) {
+    memoError.value = '請先輸入備忘內容。'
+    return
+  }
+  selectedItem.value.memos.push({ id: nextMemoId++, title: memoTitle.value.trim(), content, createdAt: new Date().toISOString() })
+  memoTitle.value = ''
+  memoContent.value = ''
+  memoSearch.value = ''
+  memoError.value = ''
+  nextTick(() => document.querySelector<HTMLTextAreaElement>('#memo-content')?.focus())
 }
 function addLog() {
   if (!selectedItem.value || !newLog.value.trim()) return
@@ -75,14 +122,22 @@ watch([createOpen, selectedItemId], async ([isCreate, itemId], [wasCreate, wasIt
   if ((isCreate || itemId) && !wasCreate && !wasItemId) {
     returnFocusTo = document.activeElement as HTMLElement
     await nextTick()
-    document.querySelector<HTMLElement>('.dialog input, .detail-drawer .icon-button')?.focus()
+    document.querySelector<HTMLElement>(isCreate ? '.dialog input' : focusMemoOnOpen.value ? '#memo-content' : '.detail-drawer .icon-button')?.focus()
   } else if (!isCreate && !itemId && (wasCreate || wasItemId)) {
+    memoTitle.value = ''
+    memoContent.value = ''
+    memoSearch.value = ''
+    memoError.value = ''
+    focusMemoOnOpen.value = false
     await nextTick()
     returnFocusTo?.focus()
     returnFocusTo = null
   }
 })
-onMounted(() => window.addEventListener('keydown', handleDialogKeydown))
+onMounted(() => {
+  updateToday()
+  window.addEventListener('keydown', handleDialogKeydown)
+})
 onUnmounted(() => window.removeEventListener('keydown', handleDialogKeydown))
 useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學校的工作項目、紀錄和備忘。' })
 </script>
@@ -138,7 +193,7 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
         <div class="breadcrumb">
           工作空間 <UIcon name="i-lucide-chevron-right" /> <strong>工作總覽</strong>
         </div><div class="topbar-right">
-          <span class="today"><UIcon name="i-lucide-calendar-days" /> 2026 年 10 月 1 日</span>
+          <span class="today"><UIcon name="i-lucide-calendar-days" /> {{ todayLabel || '今日' }}</span>
           <button
             class="theme-toggle"
             type="button"
@@ -199,7 +254,7 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
               <UIcon name="i-lucide-calendar-clock" />
             </div><div>
               <span class="summary-label">未來 7 天到期</span><div class="summary-number">
-                {{ upcomingCount }}<small>個項目</small>
+                {{ todayIso ? upcomingCount : '—' }}<small>個項目</small>
               </div>
             </div><UIcon
               class="summary-arrow"
@@ -287,10 +342,17 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
                     <button
                       class="item-title"
                       type="button"
-                      @click="selectedItemId = item.id"
+                      @click="openDetail(item.id)"
                     >
                       {{ item.title }}
-                    </button><span class="item-project">{{ item.project }}</span>
+                    </button><span class="item-project">{{ item.project }}</span><button
+                      class="memo-shortcut"
+                      type="button"
+                      :aria-label="`在${item.title}新增備忘錄，已有${item.memos.length}筆`"
+                      @click="openDetail(item.id, true)"
+                    >
+                      <UIcon name="i-lucide-sticky-note" />備忘錄 <span>{{ item.memos.length }}</span>
+                    </button>
                   </td><td><span :class="['area-tag', item.area === '公司' ? 'company' : 'school']"><UIcon :name="item.area === '公司' ? 'i-lucide-briefcase-business' : 'i-lucide-graduation-cap'" />{{ item.area }}</span></td><td><span :class="['status-tag', item.status === '進行中' ? 'in-progress' : item.status === '已完成' ? 'done' : 'pending']"><span class="status-dot" />{{ item.status }}</span></td><td><span :class="['priority', item.priority === '高' ? 'high' : item.priority === '中' ? 'medium' : 'low']"><span class="priority-line" />{{ item.priority }}</span></td><td class="date-cell">
                     {{ formatDate(item.dueDate) }}
                   </td><td>
@@ -298,7 +360,7 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
                       class="row-action"
                       type="button"
                       :aria-label="`查看${item.title}`"
-                      @click="selectedItemId = item.id"
+                      @click="openDetail(item.id)"
                     >
                       <UIcon name="i-lucide-arrow-up-right" />
                     </button>
@@ -409,11 +471,75 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
         </div><div class="detail-meta">
           <div><span>所屬專案</span><strong>{{ selectedItem.project }}</strong></div><div><span>截止日期</span><strong>{{ formatDate(selectedItem.dueDate) }}</strong></div><div><span>優先順序</span><strong>{{ selectedItem.priority }}</strong></div>
         </div><div class="detail-block">
-          <h3><UIcon name="i-lucide-sticky-note" />備忘錄</h3><textarea
-            v-model="selectedItem.memo"
-            rows="4"
-            placeholder="把需要記住的事寫在這裡..."
-          /><small>內容僅保留在目前頁面。</small>
+          <h3><UIcon name="i-lucide-sticky-note" />新增備忘錄</h3>
+          <form
+            class="memo-form"
+            @submit.prevent="addMemo"
+          >
+            <label class="field"><span>主題（選填）</span><input
+              v-model="memoTitle"
+              maxlength="80"
+              placeholder="例如：本週會議重點"
+            ></label>
+            <label class="field"><span>備忘內容 <b>*</b></span><textarea
+              id="memo-content"
+              v-model="memoContent"
+              rows="4"
+              maxlength="3000"
+              placeholder="記下需求、待辦或課堂重點"
+              :aria-invalid="Boolean(memoError)"
+              :aria-describedby="memoError ? 'memo-error' : undefined"
+              @input="memoError = ''"
+            /></label>
+            <p
+              v-if="memoError"
+              id="memo-error"
+              class="memo-error"
+              role="alert"
+            >
+              {{ memoError }}
+            </p>
+            <p class="memo-hint">
+              時間會自動記錄，每次新增都是獨立的一筆。
+            </p>
+            <button
+              class="primary-button memo-submit"
+              type="submit"
+            >
+              <UIcon name="i-lucide-plus" />新增備忘錄
+            </button>
+          </form>
+          <div class="memo-list-heading">
+            <h3><UIcon name="i-lucide-list" />備忘紀錄</h3><span>{{ selectedItem.memos.length }} 筆</span>
+          </div>
+          <label class="memo-search"><span class="sr-only">搜尋這件工作的備忘錄</span><input
+            v-model="memoSearch"
+            type="search"
+            placeholder="搜尋這件工作的備忘"
+          ></label>
+          <div
+            v-if="visibleMemos.length"
+            class="memo-list"
+          >
+            <article
+              v-for="memo in visibleMemos"
+              :key="memo.id"
+              class="memo-entry"
+            >
+              <time :datetime="memo.createdAt">{{ formatMemoTime(memo.createdAt) }}</time>
+              <h4 v-if="memo.title">
+                {{ memo.title }}
+              </h4>
+              <p>{{ memo.content }}</p>
+            </article>
+          </div>
+          <p
+            v-else
+            class="no-memo"
+          >
+            {{ memoSearch ? '找不到符合的備忘錄。' : '還沒有備忘錄，寫下第一筆吧。' }}
+          </p>
+          <small>備忘錄僅保留在目前頁面；重新整理後會重設。</small>
         </div><div class="detail-block">
           <h3><UIcon name="i-lucide-notebook-pen" />工作紀錄</h3><form
             class="log-form"
