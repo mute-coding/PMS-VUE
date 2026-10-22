@@ -1,10 +1,20 @@
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
+
 type Area = '公司' | '學校'
 type Status = '進行中' | '待開始' | '已完成'
 type Priority = '高' | '中' | '低'
 type Filter = '全部項目' | Area
 interface MemoEntry { id: number, title: string, content: string, createdAt: string }
 interface WorkItem { id: number, title: string, area: Area, project: string, status: Status, priority: Priority, dueDate: string, description: string, memos: MemoEntry[], logs: string[] }
+const columns: TableColumn<WorkItem>[] = [
+  { accessorKey: 'title', header: '工作項目' },
+  { accessorKey: 'area', header: '類別' },
+  { accessorKey: 'status', header: '狀態' },
+  { accessorKey: 'priority', header: '優先順序' },
+  { accessorKey: 'dueDate', header: '截止日期' },
+  { id: 'actions', header: '查看詳情' }
+]
 const items = ref<WorkItem[]>([
   { id: 1, title: '整理第三季產品需求', area: '公司', project: '產品規劃', status: '進行中', priority: '高', dueDate: '2026-10-03', description: '彙整各部門回饋，準備下一次需求討論。', memos: [{ id: 1, title: '討論前確認', content: '先確認設計與工程的優先順序。', createdAt: '2026-09-30T09:00:00+08:00' }], logs: ['09/30 已收集業務團隊的需求清單。'] },
   { id: 2, title: '完成行動平台期中報告', area: '學校', project: '行動平台設計', status: '進行中', priority: '高', dueDate: '2026-10-06', description: '整理研究背景、系統架構與目前成果。', memos: [{ id: 2, title: '報告準備', content: '報告需附上操作流程畫面。', createdAt: '2026-09-29T14:00:00+08:00' }], logs: ['09/29 完成報告大綱。'] },
@@ -22,6 +32,7 @@ const memoContent = ref('')
 const memoSearch = ref('')
 const memoError = ref('')
 const focusMemoOnOpen = ref(false)
+const focusMemoSearchOnOpen = ref(false)
 let nextMemoId = 4
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
@@ -32,7 +43,9 @@ let returnFocusTo: HTMLElement | null = null
 const form = reactive({ title: '', area: '公司' as Area, project: '', status: '待開始' as Status, priority: '中' as Priority, dueDate: '', description: '' })
 const filteredItems = computed(() => items.value.filter((item) => {
   const keyword = search.value.trim().toLocaleLowerCase()
-  return (activeFilter.value === '全部項目' || item.area === activeFilter.value) && (!keyword || `${item.title} ${item.project} ${item.description}`.toLocaleLowerCase().includes(keyword))
+  const itemMatches = `${item.title} ${item.project} ${item.description}`.toLocaleLowerCase().includes(keyword)
+  const memoMatches = item.memos.some(memo => `${memo.title} ${memo.content}`.toLocaleLowerCase().includes(keyword))
+  return (activeFilter.value === '全部項目' || item.area === activeFilter.value) && (!keyword || itemMatches || memoMatches)
 }))
 const selectedItem = computed(() => items.value.find(item => item.id === selectedItemId.value))
 const visibleMemos = computed(() => selectedItem.value?.memos
@@ -71,7 +84,12 @@ function createItem() {
   createOpen.value = false
 }
 function openDetail(id: number, focusMemo = false) {
+  const keyword = search.value.trim()
+  const item = items.value.find(entry => entry.id === id)
+  const hasMatchingMemo = Boolean(keyword && item?.memos.some(memo => `${memo.title} ${memo.content}`.toLocaleLowerCase().includes(keyword.toLocaleLowerCase())))
+  memoSearch.value = !focusMemo && hasMatchingMemo ? keyword : ''
   focusMemoOnOpen.value = focusMemo
+  focusMemoSearchOnOpen.value = !focusMemo && hasMatchingMemo
   selectedItemId.value = id
 }
 function formatMemoTime(value: string) {
@@ -122,13 +140,17 @@ watch([createOpen, selectedItemId], async ([isCreate, itemId], [wasCreate, wasIt
   if ((isCreate || itemId) && !wasCreate && !wasItemId) {
     returnFocusTo = document.activeElement as HTMLElement
     await nextTick()
-    document.querySelector<HTMLElement>(isCreate ? '.dialog input' : focusMemoOnOpen.value ? '#memo-content' : '.detail-drawer .icon-button')?.focus()
+    document.querySelector<HTMLElement>(isCreate ? '.dialog input' : focusMemoOnOpen.value ? '#memo-content' : focusMemoSearchOnOpen.value ? '#memo-search' : '.detail-drawer .icon-button')?.focus()
+    if (focusMemoSearchOnOpen.value) {
+      document.querySelector<HTMLElement>('.detail-drawer .memo-entry')?.scrollIntoView({ block: 'center', behavior: 'auto' })
+    }
   } else if (!isCreate && !itemId && (wasCreate || wasItemId)) {
     memoTitle.value = ''
     memoContent.value = ''
     memoSearch.value = ''
     memoError.value = ''
     focusMemoOnOpen.value = false
+    focusMemoSearchOnOpen.value = false
     await nextTick()
     returnFocusTo?.focus()
     returnFocusTo = null
@@ -308,73 +330,68 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
               >
                 {{ filter === '公司' ? '公司工作' : filter === '學校' ? '學校作業' : filter }}
               </button>
-            </div><label class="search-field"><UIcon name="i-lucide-search" /><span class="sr-only">搜尋工作項目</span><input
+            </div><label class="search-field"><UIcon name="i-lucide-search" /><span class="sr-only">搜尋工作項目或備忘錄</span><input
               v-model="search"
               type="search"
-              placeholder="搜尋工作項目..."
+              placeholder="搜尋項目或備忘..."
             ></label>
           </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">
-                    工作項目
-                  </th><th scope="col">
-                    類別
-                  </th><th scope="col">
-                    狀態
-                  </th><th scope="col">
-                    優先順序
-                  </th><th scope="col">
-                    截止日期
-                  </th><th
-                    scope="col"
-                    aria-label="查看詳情"
-                  />
-                </tr>
-              </thead><tbody>
-                <tr
-                  v-for="item in filteredItems"
-                  :key="item.id"
-                >
-                  <td>
-                    <button
-                      class="item-title"
-                      type="button"
-                      @click="openDetail(item.id)"
-                    >
-                      {{ item.title }}
-                    </button><span class="item-project">{{ item.project }}</span><button
-                      class="memo-shortcut"
-                      type="button"
-                      :aria-label="`在${item.title}新增備忘錄，已有${item.memos.length}筆`"
-                      @click="openDetail(item.id, true)"
-                    >
-                      <UIcon name="i-lucide-sticky-note" />備忘錄 <span>{{ item.memos.length }}</span>
-                    </button>
-                  </td><td><span :class="['area-tag', item.area === '公司' ? 'company' : 'school']"><UIcon :name="item.area === '公司' ? 'i-lucide-briefcase-business' : 'i-lucide-graduation-cap'" />{{ item.area }}</span></td><td><span :class="['status-tag', item.status === '進行中' ? 'in-progress' : item.status === '已完成' ? 'done' : 'pending']"><span class="status-dot" />{{ item.status }}</span></td><td><span :class="['priority', item.priority === '高' ? 'high' : item.priority === '中' ? 'medium' : 'low']"><span class="priority-line" />{{ item.priority }}</span></td><td class="date-cell">
-                    {{ formatDate(item.dueDate) }}
-                  </td><td>
-                    <button
-                      class="row-action"
-                      type="button"
-                      :aria-label="`查看${item.title}`"
-                      @click="openDetail(item.id)"
-                    >
-                      <UIcon name="i-lucide-arrow-up-right" />
-                    </button>
-                  </td>
-                </tr><tr v-if="filteredItems.length === 0">
-                  <td
-                    colspan="6"
-                    class="empty-state"
-                  >
-                    <UIcon name="i-lucide-search-x" /><strong>找不到符合的項目</strong><span>試試其他關鍵字或切換篩選條件。</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div v-if="filteredItems.length" class="table-wrap desktop-table">
+            <UTable :data="filteredItems" :columns="columns">
+              <template #title-cell="{ row }">
+                <button class="item-title" type="button" @click="openDetail(row.original.id)">{{ row.original.title }}</button>
+                <span class="item-project">{{ row.original.project }}</span>
+                <button class="memo-shortcut" type="button" :aria-label="`在${row.original.title}新增備忘錄，已有${row.original.memos.length}筆`" @click="openDetail(row.original.id, true)">
+                  <UIcon name="i-lucide-sticky-note" />備忘錄 <span>{{ row.original.memos.length }}</span>
+                </button>
+              </template>
+              <template #area-cell="{ row }">
+                <span :class="['area-tag', row.original.area === '公司' ? 'company' : 'school']"><UIcon :name="row.original.area === '公司' ? 'i-lucide-briefcase-business' : 'i-lucide-graduation-cap'" />{{ row.original.area }}</span>
+              </template>
+              <template #status-cell="{ row }">
+                <span :class="['status-tag', row.original.status === '進行中' ? 'in-progress' : row.original.status === '已完成' ? 'done' : 'pending']"><span class="status-dot" />{{ row.original.status }}</span>
+              </template>
+              <template #priority-cell="{ row }">
+                <span :class="['priority', row.original.priority === '高' ? 'high' : row.original.priority === '中' ? 'medium' : 'low']"><span class="priority-line" />{{ row.original.priority }}</span>
+              </template>
+              <template #dueDate-cell="{ row }">
+                <span class="date-cell">{{ formatDate(row.original.dueDate) }}</span>
+              </template>
+              <template #actions-cell="{ row }">
+                <button class="row-action" type="button" :aria-label="`查看${row.original.title}`" @click="openDetail(row.original.id)">
+                  <UIcon name="i-lucide-arrow-up-right" />
+                </button>
+              </template>
+            </UTable>
+          </div>
+          <div v-if="filteredItems.length" class="work-card-list">
+            <article v-for="item in filteredItems" :key="item.id" class="work-card">
+              <div class="work-card-heading">
+                <div class="work-card-identity">
+                  <button class="item-title" type="button" @click="openDetail(item.id)">{{ item.title }}</button>
+                  <span class="item-project">{{ item.project }}</span>
+                </div>
+                <button class="row-action" type="button" :aria-label="`查看${item.title}`" @click="openDetail(item.id)">
+                  <UIcon name="i-lucide-arrow-up-right" />
+                </button>
+              </div>
+              <p v-if="item.description" class="work-card-description">{{ item.description }}</p>
+              <dl class="work-card-fields">
+                <div><dt>類別</dt><dd><span :class="['area-tag', item.area === '公司' ? 'company' : 'school']"><UIcon :name="item.area === '公司' ? 'i-lucide-briefcase-business' : 'i-lucide-graduation-cap'" />{{ item.area }}</span></dd></div>
+                <div><dt>狀態</dt><dd><span :class="['status-tag', item.status === '進行中' ? 'in-progress' : item.status === '已完成' ? 'done' : 'pending']"><span class="status-dot" />{{ item.status }}</span></dd></div>
+                <div><dt>優先順序</dt><dd><span :class="['priority', item.priority === '高' ? 'high' : item.priority === '中' ? 'medium' : 'low']"><span class="priority-line" />{{ item.priority }}</span></dd></div>
+                <div><dt>截止日期</dt><dd class="date-cell">{{ item.dueDate || '未設定' }}</dd></div>
+              </dl>
+              <div class="work-card-actions">
+                <button class="memo-shortcut" type="button" :aria-label="`在${item.title}新增備忘錄，已有${item.memos.length}筆`" @click="openDetail(item.id, true)">
+                  <UIcon name="i-lucide-sticky-note" />備忘錄 <span>{{ item.memos.length }}</span>
+                </button>
+                <button class="work-card-detail" type="button" @click="openDetail(item.id)">查看詳情 <UIcon name="i-lucide-arrow-right" /></button>
+              </div>
+            </article>
+          </div>
+          <div v-if="filteredItems.length === 0" class="empty-state" role="status">
+            <UIcon name="i-lucide-search-x" /><strong>找不到符合的項目或備忘</strong><span>試試其他關鍵字或切換分類。</span>
           </div>
           <div class="table-footer">
             <span>顯示 {{ filteredItems.length }} 筆工作項目</span><span>點選項目可查看紀錄與備忘 <UIcon name="i-lucide-arrow-right" /></span>
@@ -513,6 +530,7 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
             <h3><UIcon name="i-lucide-list" />備忘紀錄</h3><span>{{ selectedItem.memos.length }} 筆</span>
           </div>
           <label class="memo-search"><span class="sr-only">搜尋這件工作的備忘錄</span><input
+            id="memo-search"
             v-model="memoSearch"
             type="search"
             placeholder="搜尋這件工作的備忘"

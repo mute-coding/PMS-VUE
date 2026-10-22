@@ -84,12 +84,30 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .search-field input::placeholder{color:#aba6b1}
 
 .table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;text-align:left}
-th{background:#fbfafc;color:#a39eaa;font-size:10px;font-weight:700;white-space:nowrap;padding:13px 14px}
-td{height:73px;border-top:1px solid #f0eef2;padding:12px 14px;color:#645e6d;font-size:11px;white-space:nowrap}
-th:first-child,td:first-child{padding-left:29px;min-width:240px}
-th:last-child,td:last-child{padding-right:25px;text-align:right}
-tbody tr:hover{background:#fdfcff}
+.desktop-table table{width:100%;border-collapse:collapse;text-align:left}
+.desktop-table th{background:#fbfafc;color:#a39eaa;font-size:10px;font-weight:700;white-space:nowrap;padding:13px 14px}
+.desktop-table td{height:73px;border-top:1px solid #f0eef2;padding:12px 14px;color:#645e6d;font-size:11px;white-space:nowrap}
+.desktop-table th:first-child,.desktop-table td:first-child{padding-left:29px;min-width:240px}
+.desktop-table th:last-child,.desktop-table td:last-child{padding-right:25px;text-align:right}
+.desktop-table tbody tr:hover{background:#fdfcff}
+.desktop-table .item-title,.desktop-table .item-project{white-space:normal;overflow-wrap:anywhere}
+.work-card-list{display:none}
+.work-card{min-width:0;padding:16px;border:1px solid #e9e5ef;border-radius:12px;background:#fff;overflow-wrap:anywhere}
+.work-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.work-card-identity{min-width:0}
+.work-card .item-title{font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.work-card .item-project{font-size:11px;overflow-wrap:anywhere}
+.work-card .row-action{flex:none;min-width:44px;min-height:44px}
+.work-card-description{margin:12px 0 0;color:#706978;font-size:11px;line-height:1.6;overflow-wrap:anywhere}
+.work-card-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px;margin:14px 0 0}
+.work-card-fields>div{min-width:0}
+.work-card-fields dt{margin-bottom:5px;color:#948d9d;font-size:10px;font-weight:700}
+.work-card-fields dd{margin:0;min-width:0;font-size:11px}
+.work-card-fields .date-cell{overflow-wrap:anywhere}
+.work-card-actions{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid #f0eef2}
+.work-card-actions .memo-shortcut{margin-top:0}
+.work-card-detail{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:44px;padding:0 8px;border:0;background:none;color:#6b55c4;font-size:11px;font-weight:700}
+.work-card-detail:hover{color:#4f399f}
 .item-title{display:block;padding:0;border:0;background:none;color:#383343;text-align:left;font-size:12px;font-weight:700}
 .item-title:hover{color:#6853c9}
 .item-project{display:block;margin-top:5px;color:#aaa5b0;font-size:10px}
@@ -114,7 +132,7 @@ tbody tr:hover{background:#fdfcff}
 .row-action:hover{color:#6853c9;background:#f7f4ff}
 .table-footer{min-height:46px;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 28px;border-top:1px solid #f0eef2;color:#aba6b0;font-size:10px}
 .table-footer span:last-child{display:flex;align-items:center;gap:4px}
-.empty-state{height:170px;text-align:center}
+.empty-state{min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;white-space:normal}
 .empty-state svg,.empty-state strong,.empty-state span{display:block;margin:3px auto}
 .empty-state svg{font-size:24px;color:#a8a0b6}
 .empty-state strong{color:#5e5769;font-size:12px}
@@ -181,6 +199,8 @@ tbody tr:hover{background:#fdfcff}
 }
 
 @media(max-width:839px){.sidebar{width:70px;flex-basis:70px;padding-inline:10px}
+.desktop-table{display:none}
+.work-card-list{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0;padding:16px 20px}
 .brand{padding-inline:6px;justify-content:center}
 .brand>span:last-child,.sidebar-section-label,.nav-label,.nav-count,.sidebar-tip,.profile{display:none}
 .nav-item{justify-content:center;padding:0}
@@ -223,7 +243,7 @@ tbody tr:hover{background:#fdfcff}
 .filter-tabs button{padding-inline:6px}
 .filter-tabs button.selected:after{bottom:-3px}
 .search-field{width:100%;margin-top:14px}
-table{min-width:680px}
+.work-card-list{padding:14px 12px}
 .table-footer{padding-inline:16px}
 .table-footer span:last-child{display:none}
 .dialog{padding:22px 18px}
@@ -303,9 +323,15 @@ html.dark .filter-tabs button.selected:after{background:#a890ff}
 html.dark .search-field{background:#26232f;border-color:#433c4e;color:#b7aec5}
 html.dark .search-field input{color:#f1eef8}
 html.dark .search-field input::placeholder{color:#a79fb3}
-html.dark th{background:#25222f;color:#bdb5ca}
-html.dark td{border-top-color:#393545;color:#d2cadb}
-html.dark tbody tr:hover{background:#292535}
+html.dark .desktop-table th{background:#25222f;color:#bdb5ca}
+html.dark .desktop-table td{border-top-color:#393545;color:#d2cadb}
+html.dark .desktop-table tbody tr:hover{background:#292535}
+html.dark .work-card{background:#25222f;border-color:#46404e}
+html.dark .work-card-description{color:#c5bacf}
+html.dark .work-card-fields dt{color:#aaa3b5}
+html.dark .work-card-actions{border-color:#393545}
+html.dark .work-card-detail{color:#cab8ff}
+html.dark .work-card-detail:hover{color:#e4d9ff}
 html.dark .item-title{color:#f1eef8}
 html.dark .item-title:hover{color:#c4b4ff}
 html.dark .item-project,html.dark .table-footer,html.dark .static-note{color:#aaa3b5}
