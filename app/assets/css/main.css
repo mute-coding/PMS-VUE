@@ -48,7 +48,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .eyebrow span{height:1px;width:24px;background:#bdb3e9}
 .page-heading h1{font-size:clamp(30px,3vw,41px);line-height:1.25;letter-spacing:-.055em;margin:12px 0 8px;font-weight:800}
 .title-dot{color:#705bd0}
-.page-heading p,.section-header p{color:#96919f;font-size:13px;margin:0;line-height:1.6}
+.page-heading p,.section-header p{color:#625c6b;font-size:13px;margin:0;line-height:1.6}
 .primary-button,.secondary-button,.text-button{border:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;white-space:nowrap}
 .primary-button{min-height:43px;border-radius:11px;background:#6853c9;color:#fff;padding:0 19px;font-size:12px;box-shadow:0 6px 16px #6c55c52b}
 .primary-button:hover{background:#5844b8}
@@ -96,12 +96,12 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .work-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .work-card-identity{min-width:0}
 .work-card .item-title{font-size:14px;line-height:1.5;overflow-wrap:anywhere}
-.work-card .item-project{font-size:11px;overflow-wrap:anywhere}
+.work-card .item-project{font-size:11px;color:#625b6c;overflow-wrap:anywhere}
 .work-card .row-action{flex:none;min-width:44px;min-height:44px}
 .work-card-description{margin:12px 0 0;color:#706978;font-size:11px;line-height:1.6;overflow-wrap:anywhere}
 .work-card-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px;margin:14px 0 0}
 .work-card-fields>div{min-width:0}
-.work-card-fields dt{margin-bottom:5px;color:#948d9d;font-size:10px;font-weight:700}
+.work-card-fields dt{margin-bottom:5px;color:#615a6b;font-size:10px;font-weight:700}
 .work-card-fields dd{margin:0;min-width:0;font-size:11px}
 .work-card-fields .date-cell{overflow-wrap:anywhere}
 .work-card-actions{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid #f0eef2}
@@ -118,7 +118,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .area-tag svg{font-size:12px}
 .area-tag.company{color:#7057b8;background:#f2eefe}
 .area-tag.school{color:#4c86ad;background:#eaf5fb}
-.status-tag.in-progress{color:#4c84bb;background:#eaf4ff}
+.status-tag.in-progress{color:#2e6496;background:#eaf4ff}
 .status-tag.pending{color:#a78244;background:#fbf4e8}
 .status-tag.done{color:#55a17a;background:#eaf7ef}
 .status-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
@@ -268,15 +268,18 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
 
 /* Minimum touch target for primary interactive controls. */
-.nav-item,.primary-button,.secondary-button,.filter-tabs button{min-height:44px}
-.row-action,.icon-button{width:44px;height:44px}
-.search-field{height:44px}
-.log-form button{width:44px}
-@media(max-width:599px){.heading-add,.section-add{width:44px;min-width:44px;min-height:44px}
+.nav-item,.primary-button,.secondary-button,.text-button,.filter-tabs button{min-height:48px}
+.row-action,.icon-button{width:48px;height:48px}
+.search-field{height:48px}
+.log-form button{width:48px}
+.memo-shortcut,.work-card-detail{min-height:48px}
+@media(max-width:599px){.heading-add{width:auto;min-width:52px;min-height:52px;padding:0 16px;font-size:14px}
+.heading-add .button-label{display:inline}
+.section-add{width:48px;min-width:48px;min-height:48px}
 }
 
 /* Color mode follows Nuxt's html.dark class and saved preference. */
-.theme-toggle{width:44px;height:44px;display:grid;place-items:center;flex:none;border:1px solid #e7e2f0;border-radius:12px;background:#f8f6fc;color:#6752bd;font-size:19px}
+.theme-toggle{width:48px;height:48px;display:grid;place-items:center;flex:none;border:1px solid #e7e2f0;border-radius:12px;background:#f8f6fc;color:#6752bd;font-size:19px}
 .theme-toggle:hover{background:#efebfb}
 .topbar-avatar{margin-left:0}
 html.dark{color-scheme:dark;background:#12111a;color:#f1eef8}
@@ -366,3 +369,25 @@ html.dark .log-list{border-left-color:#645280}
 html.dark .log-list p{color:#d5ccdf}
 @media(max-width:599px){html.dark .sidebar{border-top-color:#393545}}
 @media(max-width:599px){.memo-form .field input,.memo-form .field textarea,.memo-search input{font-size:16px}}
+
+/* W6: keep the mobile work-item reading and action path legible and touchable. */
+@media(max-width:839px){
+.topbar{height:auto;min-height:52px;padding-block:8px}
+.breadcrumb{min-width:0;flex-wrap:wrap;line-height:1.4}
+.page-heading{flex-wrap:wrap}
+.page-heading>div{flex:1 1 180px;min-width:0}
+.page-heading .heading-add{margin-left:auto}
+.eyebrow{flex-wrap:wrap}
+.work-card .item-title{display:flex;align-items:center;min-height:48px;font-size:18px;line-height:1.45}
+.work-card .item-project,.work-card-description,.work-card-fields dt,.work-card-fields dd,.work-card-detail,.work-card .memo-shortcut{font-size:16px}
+.work-card .area-tag,.work-card .status-tag{font-size:16px}
+.work-card-description{line-height:1.5}
+.work-card-fields{gap:16px 12px;margin-top:16px}
+.work-card-actions{margin-top:16px;padding-top:16px}
+.page-heading p,.section-header p{font-size:16px}
+.search-field input{font-size:16px}
+.filter-tabs button{font-size:14px}
+.dialog-top p,.detail-desc,.field span,.field input,.field select,.field textarea,.detail-block textarea,.memo-hint,.memo-error,.memo-entry p,.memo-list-heading>span,.memo-search input{font-size:16px}
+.field input,.field select{min-height:48px}
+.memo-submit{min-height:52px;font-size:16px}
+}
