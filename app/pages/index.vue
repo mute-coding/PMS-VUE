@@ -3,23 +3,25 @@ import type { TableColumn } from '@nuxt/ui'
 
 type Area = '公司' | '學校'
 type Status = '進行中' | '待開始' | '已完成'
+type TicketStatus = '未完成' | '進行中' | '已完成'
 type Priority = '高' | '中' | '低'
 type Filter = '全部項目' | Area
-interface MemoEntry { id: number, title: string, content: string, createdAt: string }
+interface MemoEntry { id: number, title: string, content: string, status: TicketStatus, createdAt: string }
 interface WorkItem { id: number, title: string, area: Area, project: string, status: Status, priority: Priority, dueDate: string, description: string, memos: MemoEntry[], logs: string[] }
 const columns: TableColumn<WorkItem>[] = [
   { accessorKey: 'title', header: '工作項目' },
   { accessorKey: 'area', header: '類別' },
   { accessorKey: 'status', header: '狀態' },
+  { id: 'ticketProgress', header: '備忘 Ticket 進度' },
   { accessorKey: 'priority', header: '優先順序' },
   { accessorKey: 'dueDate', header: '截止日期' },
   { id: 'actions', header: '查看詳情' }
 ]
 const items = ref<WorkItem[]>([
-  { id: 1, title: '整理第三季產品需求', area: '公司', project: '產品規劃', status: '進行中', priority: '高', dueDate: '2026-10-03', description: '彙整各部門回饋，準備下一次需求討論。', memos: [{ id: 1, title: '討論前確認', content: '先確認設計與工程的優先順序。', createdAt: '2026-09-30T09:00:00+08:00' }], logs: ['09/30 已收集業務團隊的需求清單。'] },
-  { id: 2, title: '完成行動平台期中報告', area: '學校', project: '行動平台設計', status: '進行中', priority: '高', dueDate: '2026-10-06', description: '整理研究背景、系統架構與目前成果。', memos: [{ id: 2, title: '報告準備', content: '報告需附上操作流程畫面。', createdAt: '2026-09-29T14:00:00+08:00' }], logs: ['09/29 完成報告大綱。'] },
+  { id: 1, title: '整理第三季產品需求', area: '公司', project: '產品規劃', status: '進行中', priority: '高', dueDate: '2026-10-03', description: '彙整各部門回饋，準備下一次需求討論。', memos: [{ id: 1, title: '討論前確認', content: '先確認設計與工程的優先順序。', status: '未完成', createdAt: '2026-09-30T09:00:00+08:00' }], logs: ['09/30 已收集業務團隊的需求清單。'] },
+  { id: 2, title: '完成行動平台期中報告', area: '學校', project: '行動平台設計', status: '進行中', priority: '高', dueDate: '2026-10-06', description: '整理研究背景、系統架構與目前成果。', memos: [{ id: 2, title: '報告準備', content: '報告需附上操作流程畫面。', status: '進行中', createdAt: '2026-09-29T14:00:00+08:00' }], logs: ['09/29 完成報告大綱。'] },
   { id: 3, title: '更新客戶訪談摘要', area: '公司', project: '使用者研究', status: '待開始', priority: '中', dueDate: '2026-10-09', description: '將近期訪談重點整理成可搜尋的摘要。', memos: [], logs: [] },
-  { id: 4, title: '閱讀資料庫系統論文', area: '學校', project: '資料庫系統', status: '進行中', priority: '中', dueDate: '2026-10-12', description: '閱讀指定論文並整理三個討論問題。', memos: [{ id: 3, title: '閱讀重點', content: '留意實驗方法與限制。', createdAt: '2026-09-28T18:00:00+08:00' }], logs: ['09/28 已下載指定閱讀材料。'] },
+  { id: 4, title: '閱讀資料庫系統論文', area: '學校', project: '資料庫系統', status: '進行中', priority: '中', dueDate: '2026-10-12', description: '閱讀指定論文並整理三個討論問題。', memos: [{ id: 3, title: '閱讀重點', content: '留意實驗方法與限制。', status: '已完成', createdAt: '2026-09-28T18:00:00+08:00' }], logs: ['09/28 已下載指定閱讀材料。'] },
   { id: 5, title: '整理每週例會待辦', area: '公司', project: '團隊協作', status: '已完成', priority: '低', dueDate: '2026-09-30', description: '確認本週會議待辦與負責人。', memos: [], logs: ['09/30 完成會議紀錄與分工。'] }
 ])
 const activeFilter = ref<Filter>('全部項目')
@@ -29,6 +31,7 @@ const selectedItemId = ref<number | null>(null)
 const newLog = ref('')
 const memoTitle = ref('')
 const memoContent = ref('')
+const memoStatus = ref<TicketStatus>('未完成')
 const memoSearch = ref('')
 const memoError = ref('')
 const focusMemoOnOpen = ref(false)
@@ -52,6 +55,18 @@ const visibleMemos = computed(() => selectedItem.value?.memos
   .filter(memo => `${memo.title} ${memo.content}`.toLocaleLowerCase().includes(memoSearch.value.trim().toLocaleLowerCase()))
   .slice()
   .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt) || b.id - a.id) || [])
+const ticketCountsByItem = computed(() => {
+  const counts = new Map<number, Record<TicketStatus, number>>()
+  for (const item of items.value) {
+    const itemCounts: Record<TicketStatus, number> = { 未完成: 0, 進行中: 0, 已完成: 0 }
+    for (const memo of item.memos) itemCounts[memo.status]++
+    counts.set(item.id, itemCounts)
+  }
+  return counts
+})
+function ticketStatusClass(status: TicketStatus) {
+  return status === '已完成' ? 'done' : status === '進行中' ? 'in-progress' : 'pending'
+}
 const activeCount = computed(() => items.value.filter(item => item.status === '進行中').length)
 const todayIso = ref('')
 const todayLabel = ref('')
@@ -102,9 +117,10 @@ function addMemo() {
     memoError.value = '請先輸入備忘內容。'
     return
   }
-  selectedItem.value.memos.push({ id: nextMemoId++, title: memoTitle.value.trim(), content, createdAt: new Date().toISOString() })
+  selectedItem.value.memos.push({ id: nextMemoId++, title: memoTitle.value.trim(), content, status: memoStatus.value, createdAt: new Date().toISOString() })
   memoTitle.value = ''
   memoContent.value = ''
+  memoStatus.value = '未完成'
   memoSearch.value = ''
   memoError.value = ''
   nextTick(() => document.querySelector<HTMLTextAreaElement>('#memo-content')?.focus())
@@ -147,6 +163,7 @@ watch([createOpen, selectedItemId], async ([isCreate, itemId], [wasCreate, wasIt
   } else if (!isCreate && !itemId && (wasCreate || wasItemId)) {
     memoTitle.value = ''
     memoContent.value = ''
+    memoStatus.value = '未完成'
     memoSearch.value = ''
     memoError.value = ''
     focusMemoOnOpen.value = false
@@ -351,6 +368,13 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
               <template #status-cell="{ row }">
                 <span :class="['status-tag', row.original.status === '進行中' ? 'in-progress' : row.original.status === '已完成' ? 'done' : 'pending']"><span class="status-dot" />{{ row.original.status }}</span>
               </template>
+              <template #ticketProgress-cell="{ row }">
+                <div class="ticket-counts" :aria-label="`${row.original.title}：未完成 ${ticketCountsByItem.get(row.original.id)?.未完成 ?? 0}，進行中 ${ticketCountsByItem.get(row.original.id)?.進行中 ?? 0}，已完成 ${ticketCountsByItem.get(row.original.id)?.已完成 ?? 0}`">
+                  <span>未完成 <strong>{{ ticketCountsByItem.get(row.original.id)?.未完成 ?? 0 }}</strong></span>
+                  <span>進行中 <strong>{{ ticketCountsByItem.get(row.original.id)?.進行中 ?? 0 }}</strong></span>
+                  <span>已完成 <strong>{{ ticketCountsByItem.get(row.original.id)?.已完成 ?? 0 }}</strong></span>
+                </div>
+              </template>
               <template #priority-cell="{ row }">
                 <span :class="['priority', row.original.priority === '高' ? 'high' : row.original.priority === '中' ? 'medium' : 'low']"><span class="priority-line" />{{ row.original.priority }}</span>
               </template>
@@ -382,6 +406,14 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
                 <div><dt>優先順序</dt><dd><span :class="['priority', item.priority === '高' ? 'high' : item.priority === '中' ? 'medium' : 'low']"><span class="priority-line" />{{ item.priority }}</span></dd></div>
                 <div><dt>截止日期</dt><dd class="date-cell">{{ item.dueDate || '未設定' }}</dd></div>
               </dl>
+              <div class="work-card-ticket-progress">
+                <strong>備忘 Ticket 進度</strong>
+                <div class="ticket-counts">
+                  <span>未完成 <strong>{{ ticketCountsByItem.get(item.id)?.未完成 ?? 0 }}</strong></span>
+                  <span>進行中 <strong>{{ ticketCountsByItem.get(item.id)?.進行中 ?? 0 }}</strong></span>
+                  <span>已完成 <strong>{{ ticketCountsByItem.get(item.id)?.已完成 ?? 0 }}</strong></span>
+                </div>
+              </div>
               <div class="work-card-actions">
                 <button class="memo-shortcut" type="button" :aria-label="`在${item.title}新增備忘錄，已有${item.memos.length}筆`" @click="openDetail(item.id, true)">
                   <UIcon name="i-lucide-sticky-note" />備忘錄 <span>{{ item.memos.length }}</span>
@@ -508,6 +540,7 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
               :aria-describedby="memoError ? 'memo-error' : undefined"
               @input="memoError = ''"
             /></label>
+            <label class="field"><span>Ticket 狀態</span><select v-model="memoStatus"><option>未完成</option><option>進行中</option><option>已完成</option></select></label>
             <p
               v-if="memoError"
               id="memo-error"
@@ -544,19 +577,21 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
               :key="memo.id"
               class="memo-entry"
             >
-              <time :datetime="memo.createdAt">{{ formatMemoTime(memo.createdAt) }}</time>
+              <div class="memo-entry-top">
+                <time :datetime="memo.createdAt">{{ formatMemoTime(memo.createdAt) }}</time>
+                <span :class="['status-tag', ticketStatusClass(memo.status)]"><span class="status-dot" />{{ memo.status }}</span>
+              </div>
               <h4 v-if="memo.title">
                 {{ memo.title }}
               </h4>
               <p>{{ memo.content }}</p>
+              <label class="memo-status-control"><span>更新 Ticket 狀態</span><select v-model="memo.status" :aria-label="`更新備忘錄${memo.title || memo.content.slice(0, 20)}的狀態`"><option>未完成</option><option>進行中</option><option>已完成</option></select></label>
             </article>
           </div>
-          <p
-            v-else
-            class="no-memo"
-          >
-            {{ memoSearch ? '找不到符合的備忘錄。' : '還沒有備忘錄，寫下第一筆吧。' }}
-          </p>
+          <div v-else class="no-memo" role="status">
+            <p>{{ memoSearch ? '找不到符合的備忘錄。' : '還沒有備忘錄，寫下第一筆吧。' }}</p>
+            <button v-if="memoSearch" type="button" class="clear-memo-search" @click="memoSearch = ''">清除搜尋，顯示全部備忘</button>
+          </div>
           <small>備忘錄僅保留在目前頁面；重新整理後會重設。</small>
         </div><div class="detail-block">
           <h3><UIcon name="i-lucide-notebook-pen" />工作紀錄</h3><form

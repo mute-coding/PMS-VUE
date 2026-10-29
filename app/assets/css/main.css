@@ -392,3 +392,20 @@ html.dark .log-list p{color:#CBD5E1}
 }
 
 :is(button,input,select,textarea):focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* W7: memo tickets keep their own status; list counts come from those records. */
+.ticket-counts{display:flex;flex-wrap:wrap;gap:6px;white-space:normal}
+.ticket-counts>span{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:var(--selected);color:var(--text-primary);font-size:11px;white-space:nowrap}
+.ticket-counts strong{font-variant-numeric:tabular-nums}
+.desktop-table .ticket-counts{min-width:230px}
+.work-card-ticket-progress{margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+.work-card-ticket-progress>strong{display:block;margin-bottom:8px;color:var(--text-secondary);font-size:12px}
+.memo-entry-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.memo-status-control{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);color:var(--text-secondary);font-size:12px;font-weight:700}
+.memo-status-control select{min-height:44px;min-width:120px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text-primary);padding:8px 10px}
+.no-memo p{margin:0}
+.clear-memo-search{min-height:48px;margin-top:8px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--primary);font-weight:700}
+html.dark .ticket-counts>span{background:#263c54}
+html.dark .memo-status-control{border-color:var(--border)}
+html.dark .clear-memo-search{background:#334155;color:#93C5FD}
+@media(max-width:839px){.work-card-ticket-progress>strong,.ticket-counts>span,.memo-status-control,.no-memo,.clear-memo-search{font-size:16px}.memo-status-control select{min-height:48px;font-size:16px}}
