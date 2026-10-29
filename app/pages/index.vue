@@ -248,7 +248,7 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
           aria-label="工作項目摘要"
         >
           <div class="summary-card">
-            <div class="summary-icon purple">
+            <div class="summary-icon primary">
               <UIcon name="i-lucide-list-todo" />
             </div><div>
               <span class="summary-label">所有項目</span><div class="summary-number">
