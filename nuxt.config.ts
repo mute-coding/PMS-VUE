@@ -17,7 +17,8 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/': { prerender: true }
+    '/': { prerender: true },
+    '/login': { prerender: true }
   },
 
   compatibilityDate: '2026-06-30'

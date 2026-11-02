@@ -39,8 +39,14 @@ const focusMemoSearchOnOpen = ref(false)
 let nextMemoId = 4
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
+const { token, logout } = useMockAuth()
+const authReady = ref(false)
 function toggleColorMode() {
   colorMode.preference = isDark.value ? 'light' : 'dark'
+}
+async function handleLogout() {
+  logout()
+  await navigateTo('/login')
 }
 let returnFocusTo: HTMLElement | null = null
 const form = reactive({ title: '', area: '公司' as Area, project: '', status: '待開始' as Status, priority: '中' as Priority, dueDate: '', description: '' })
@@ -174,6 +180,7 @@ watch([createOpen, selectedItemId], async ([isCreate, itemId], [wasCreate, wasIt
   }
 })
 onMounted(() => {
+  authReady.value = true
   updateToday()
   window.addEventListener('keydown', handleDialogKeydown)
 })
@@ -182,7 +189,7 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
 </script>
 
 <template>
-  <div class="app-shell">
+  <div v-if="authReady && token" class="app-shell">
     <aside
       class="sidebar"
       aria-label="主導覽"
@@ -223,7 +230,7 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
         <div class="sidebar-tip">
           <UIcon name="i-lucide-sparkles" /><strong>讓每件事都有位置</strong><p>快速建立項目，隨時留下工作紀錄與備忘。</p>
         </div><div class="profile">
-          <span class="avatar">我</span><span><strong>我的工作空間</strong><small>個人管理中心</small></span><UIcon name="i-lucide-chevrons-up-down" />
+          <span class="avatar">A</span><span><strong>admin</strong><small>示範帳號</small></span><UIcon name="i-lucide-chevrons-up-down" />
         </div>
       </div>
     </aside>
@@ -242,7 +249,7 @@ useSeoMeta({ title: '工作總覽｜PMS', description: '集中管理公司與學
           >
             <UIcon :name="isDark ? 'i-lucide-sun' : 'i-lucide-moon'" />
           </button>
-          <span class="topbar-avatar">我</span>
+          <button type="button" class="topbar-login" @click="handleLogout">登出</button>
         </div>
       </div>
       <div class="page-content">
