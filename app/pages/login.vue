@@ -86,7 +86,6 @@ useSeoMeta({ title: '登入｜PMS', description: '工作項目管理系統登入
             </p>
           </template>
           <template #footer>
-            <p class="login-note">示範帳號：admin／密碼：administrator</p>
             <p class="login-note">這是前端模擬登入；資料仍只保留在目前頁面。</p>
           </template>
         </UAuthForm>
